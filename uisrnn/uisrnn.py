@@ -29,22 +29,28 @@ _INITIAL_SIGMA2_VALUE = 0.1
 class CoreRNN(nn.Module):
   """The core Recurent Neural Network used by UIS-RNN."""
 
-  def __init__(self, input_dim, hidden_size, depth, observation_dim, dropout=0):
+  def __init__(self, input_dim, hidden_size, rnn_depth, fc_depth,
+      observation_dim, dropout=0, non_lin=True):
     super(CoreRNN, self).__init__()
     self.hidden_size = hidden_size
-    if depth >= 2:
-      self.gru = nn.GRU(input_dim, hidden_size, depth, dropout=dropout)
+    self.non_lin = non_lin
+    if rnn_depth >= 2:
+      self.gru = nn.GRU(input_dim, hidden_size, rnn_depth, dropout=dropout)
     else:
-      self.gru = nn.GRU(input_dim, hidden_size, depth)
-    self.linear_mean1 = nn.Linear(hidden_size, hidden_size)
-    self.linear_mean2 = nn.Linear(hidden_size, observation_dim)
+      self.gru = nn.GRU(input_dim, hidden_size, rnn_depth)
+    self.linears = nn.ModuleList(
+        [nn.Linear(hidden_size, hidden_size) for _ in range(fc_depth)])
+    self.last_linear = nn.Linear(hidden_size, observation_dim)
 
   def forward(self, input_seq, hidden=None):
-    output_seq, hidden = self.gru(input_seq, hidden)
-    if isinstance(output_seq, torch.nn.utils.rnn.PackedSequence):
-      output_seq, _ = torch.nn.utils.rnn.pad_packed_sequence(
-          output_seq, batch_first=False)
-    mean = self.linear_mean2(F.relu(self.linear_mean1(output_seq)))
+    out, hidden = self.gru(input_seq, hidden)
+    if isinstance(out, torch.nn.utils.rnn.PackedSequence):
+      out, _ = torch.nn.utils.rnn.pad_packed_sequence(out, batch_first=False)
+    for layer in self.linears:
+        out = layer(out)
+        if self.non_lin:
+          out = F.relu(out)
+    mean = self.last_linear(out)
     return mean, hidden
 
 
@@ -86,8 +92,9 @@ class UISRNN:
     self.device = torch.device(
         'cuda:0' if (torch.cuda.is_available() and args.enable_cuda) else 'cpu')
     self.rnn_model = CoreRNN(self.observation_dim, args.rnn_hidden_size,
-                             args.rnn_depth, self.observation_dim,
-                             args.rnn_dropout).to(self.device)
+                             args.rnn_depth, args.fc_depth,
+                             self.observation_dim, args.rnn_dropout,
+                             args.non_lin).to(self.device)
     self.rnn_init_hidden = nn.Parameter(
         torch.zeros(args.rnn_depth, 1, args.rnn_hidden_size).to(self.device))
     # booleans indicating which variables are trainable

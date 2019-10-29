@@ -58,10 +58,20 @@ def parse_arguments():
       type=int,
       help='The number of RNN layers.')
   model_parser.add_argument(
+      '--fc_depth',
+      default=1,
+      type=int,
+      help='The number of fully connected layers.')
+  model_parser.add_argument(
       '--rnn_dropout',
       default=0.2,
       type=float,
       help='The dropout rate for all RNN layers.')
+  model_parser.add_argument(
+      '--non_lin',
+      default=True,
+      type=str2bool,
+      help='Whether to use non linearity after linear layers or not.')
   model_parser.add_argument(
       '--transition_bias',
       default=None,
