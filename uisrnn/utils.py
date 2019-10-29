@@ -328,3 +328,30 @@ def estimate_transition_bias(cluster_ids, smooth=1):
       bias_denominator += 1
   bias = transit_num / bias_denominator
   return bias, bias_denominator
+
+
+def estimate_crp_alpha(cluster_ids, smooth=1):
+  """Estimate the transition bias.
+
+  Args:
+    cluster_id: Either a list of cluster indicator sequences, or a single
+      concatenated sequence. The former is strongly preferred, since the
+      transition_bias estimated from the latter will be inaccurate.
+    smooth: int or float - Smoothing coefficient, avoids -inf value in np.log
+      in the case of a sequence with a single speaker and division by 0 in the
+      case of empty sequences. Using a small value for smooth decreases the
+      bias in the calculation of transition_bias but can also lead to underflow
+      in some remote cases, larger values are safer but less accurate.
+
+  Returns:
+    crp_alpha: alpha parameter of the ddCRP that quentifies the probability
+      of a new speaker joining the conversation.
+    crp_alpha_denominator: The denominator of for crp_alpha, used for
+      multiple calls to fit().
+  """
+  speaker_joins = sum(len(set(seq)) - 1 for seq in cluster_ids) + smooth
+  speaker_changes = 2 * smooth
+  for cluster_id_seq in cluster_ids:
+    for entry in range(len(cluster_id_seq) - 1):
+      speaker_changes += (cluster_id_seq[entry] != cluster_id_seq[entry + 1])
+  return speaker_joins / speaker_changes, speaker_changes

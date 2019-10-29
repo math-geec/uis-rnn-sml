@@ -93,6 +93,7 @@ class UISRNN:
     # booleans indicating which variables are trainable
     self.estimate_sigma2 = (args.sigma2 is None)
     self.estimate_transition_bias = (args.transition_bias is None)
+    self.estimate_crp_alpha = (args.transition_bias is None)
     # initial values of variables
     sigma2 = _INITIAL_SIGMA2_VALUE if self.estimate_sigma2 else args.sigma2
     self.sigma2 = nn.Parameter(
@@ -369,6 +370,21 @@ class UISRNN:
             transition_bias * transition_bias_denominator) / (
                 self.transition_bias_denominator + transition_bias_denominator)
         self.transition_bias_denominator += transition_bias_denominator
+
+    # estimate crp_alpha
+    if self.estimate_crp_alpha:
+      (crp_alpha,
+       crp_alpha_denominator) = utils.estimate_crp_alpha(train_cluster_ids)
+      # set or update crp_alpha
+      if self.crp_alpha is None:
+        self.crp_alpha = crp_alpha
+        self.crp_alpha_denominator = crp_alpha_denominator
+      else:
+        self.crp_alpha = (
+            self.crp_alpha * self.crp_alpha_denominator +
+            crp_alpha * crp_alpha_denominator) / (
+                self.crp_alpha_denominator + crp_alpha)
+        self.crp_alpha_denominator += crp_alpha_denominator
 
     # concatenate train_sequences
     (concatenated_train_sequence,

@@ -72,12 +72,12 @@ def parse_arguments():
            'using Eq. (13) in the paper.')
   model_parser.add_argument(
       '--crp_alpha',
-      default=1.0,
+      default=None,
       type=float,
       help='The value of alpha for the Chinese restaurant process (CRP), '
-           'corresponding to Eq. (7) in the paper. In this open source '
-           'implementation, currently we only support using a given value '
-           'of crp_alpha.')
+           'corresponding to Eq. (7) in the paper.  If the value is given,'
+           'we will fix to this value. If the value is None, we will estimate '
+           'it from training data.')
   model_parser.add_argument(
       '--sigma2',
       default=None,
