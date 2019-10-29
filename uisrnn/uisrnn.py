@@ -141,6 +141,7 @@ class UISRNN:
         'transition_bias': self.transition_bias,
         'transition_bias_denominator': self.transition_bias_denominator,
         'crp_alpha': self.crp_alpha,
+        'crp_alpha_denominator': self.crp_alpha_denominator,
         'sigma2': self.sigma2.detach().cpu().numpy()}, filepath)
 
   def load(self, filepath):
@@ -157,6 +158,7 @@ class UISRNN:
     self.transition_bias_denominator = float(
         var_dict['transition_bias_denominator'])
     self.crp_alpha = float(var_dict['crp_alpha'])
+    self.crp_alpha_denominator = float(var_dict['crp_alpha_denominator'])
     self.sigma2 = nn.Parameter(
         torch.from_numpy(var_dict['sigma2']).to(self.device))
 
