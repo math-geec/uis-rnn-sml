@@ -134,6 +134,12 @@ def parse_arguments():
       type=int,
       help='The total number of training iterations.')
   training_parser.add_argument(
+      '--epochs',
+      '-e',
+      default=10,
+      type=int,
+      help='The total number of training epochs.')
+  training_parser.add_argument(
       '--batch_size',
       '-b',
       default=10,

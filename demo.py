@@ -14,6 +14,7 @@
 """A demo script showing how to use the uisrnn package on toy data."""
 
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter
 
 import uisrnn
 
@@ -31,10 +32,7 @@ def diarization_experiment(model_args, training_args, inference_args):
     training_args: training configurations
     inference_args: inference configurations
   """
-
-  predicted_cluster_ids = []
-  test_record = []
-
+  # data loading
   train_data = np.load('./data/toy_training_data.npz', allow_pickle=True)
   test_data = np.load('./data/toy_testing_data.npz', allow_pickle=True)
   train_sequence = train_data['train_sequence']
@@ -42,15 +40,25 @@ def diarization_experiment(model_args, training_args, inference_args):
   test_sequences = test_data['test_sequences'].tolist()
   test_cluster_ids = test_data['test_cluster_ids'].tolist()
 
+  # model init
   model = uisrnn.UISRNN(model_args)
+  # model.load(SAVED_MODEL_NAME) # to load a checkpoint
+  # tensorboard writer init
+  writer = SummaryWriter()
 
   # training
-  model.fit(train_sequence, train_cluster_id, training_args)
-  model.save(SAVED_MODEL_NAME)
-  # we can also skip training by calling：
-  # model.load(SAVED_MODEL_NAME)
+  for epoch in range(training_args.epochs):
+    stats = model.fit(train_sequence, train_cluster_id, training_args)
+    # add to tensorboard
+    for loss, cur_iter in stats:
+      for loss_name, loss_value in loss.items():
+        writer.add_scalar('loss/' + loss_name, loss_value, cur_iter)
+    # save the mdoel
+    model.save(SAVED_MODEL_NAME)
 
   # testing
+  predicted_cluster_ids = []
+  test_record = []
   for (test_sequence, test_cluster_id) in zip(test_sequences, test_cluster_ids):
     predicted_cluster_id = model.predict(test_sequence, inference_args)
     predicted_cluster_ids.append(predicted_cluster_id)
@@ -63,10 +71,11 @@ def diarization_experiment(model_args, training_args, inference_args):
     print(predicted_cluster_id)
     print('-' * 80)
 
-  output_string = uisrnn.output_result(model_args, training_args, test_record)
+  # close tensorboard writer
+  writer.close()
 
   print('Finished diarization experiment')
-  print(output_string)
+  print(uisrnn.output_result(model_args, training_args, test_record))
 
 
 def main():

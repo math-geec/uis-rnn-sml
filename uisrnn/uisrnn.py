@@ -109,6 +109,8 @@ class UISRNN:
     self.transition_bias_denominator = 0.0
     self.crp_alpha = args.crp_alpha
     self.logger = utils.Logger(args.verbosity)
+    self.current_iter = 0
+
 
   def _get_optimizer(self, optimizer, learning_rate):
     """Get optimizer for UISRNN.
@@ -149,7 +151,8 @@ class UISRNN:
         'transition_bias_denominator': self.transition_bias_denominator,
         'crp_alpha': self.crp_alpha,
         'crp_alpha_denominator': self.crp_alpha_denominator,
-        'sigma2': self.sigma2.detach().cpu().numpy()}, filepath)
+        'sigma2': self.sigma2.detach().cpu().numpy(),
+        'current_iter': self.current_iter}, filepath)
 
   def load(self, filepath):
     """Load the model from a file.
@@ -168,6 +171,7 @@ class UISRNN:
     self.crp_alpha_denominator = float(var_dict['crp_alpha_denominator'])
     self.sigma2 = nn.Parameter(
         torch.from_numpy(var_dict['sigma2']).to(self.device))
+    self.current_iter = int(var_dict['current_iter'])
 
     self.logger.print(
         3, 'Loaded model with transition_bias={}, crp_alpha={}, sigma2={}, '
@@ -255,7 +259,8 @@ class UISRNN:
           self.observation_dim,
           self.device)
     train_loss = []
-    for num_iter in range(args.train_iteration):
+    for _ in range(args.train_iteration):
+      self.current_iter += 1
       optimizer.zero_grad()
       # For online learning, pack a subset in each iteration.
       if args.batch_size is not None:
@@ -300,8 +305,8 @@ class UISRNN:
       # avoid numerical issues
       self.sigma2.data.clamp_(min=1e-6)
 
-      if (np.remainder(num_iter, 10) == 0 or
-          num_iter == args.train_iteration - 1):
+      if (np.remainder(self.current_iter, 10) == 0 or
+          self.current_iter == args.train_iteration - 1):
         self.logger.print(
             2,
             'Iter: {:d}  \t'
@@ -309,14 +314,19 @@ class UISRNN:
             '    Negative Log Likelihood: {:.4f}\t'
             'Sigma2 Prior: {:.4f}\t'
             'Regularization: {:.4f}'.format(
-                num_iter,
+                self.current_iter,
                 float(loss.data),
                 float(loss1.data),
                 float(loss2.data),
                 float(loss3.data)))
+        yield {'total': loss.data,
+               'nll': loss1.data,
+               's2p': loss2.data,
+               'regular': loss3.data}, self.current_iter
       train_loss.append(float(loss1.data))  # only save the likelihood part
     self.logger.print(
         1, 'Done training with {} iterations'.format(args.train_iteration))
+
 
   def fit(self, train_sequences, train_cluster_ids, args):
     """Fit UISRNN model.
@@ -403,7 +413,7 @@ class UISRNN:
          args.enforce_cluster_id_uniqueness,
          True)
 
-    self.fit_concatenated(
+    return self.fit_concatenated(
         concatenated_train_sequence, concatenated_train_cluster_id, args)
 
   def _update_beam_state(self, beam_state, look_ahead_seq, cluster_seq):
