@@ -14,12 +14,16 @@
 """A demo script showing how to use the uisrnn package on toy data."""
 
 import numpy as np
+from functools import partial
 from torch.utils.tensorboard import SummaryWriter
+import torch.multiprocessing as mp
+mp = mp.get_context('forkserver')
 
 import uisrnn
 
 
 SAVED_MODEL_NAME = 'saved_model.uisrnn'
+NUM_WORKERS = 2
 
 
 def diarization_experiment(model_args, training_args, inference_args):
@@ -59,18 +63,26 @@ def diarization_experiment(model_args, training_args, inference_args):
   # testing
   predicted_cluster_ids = []
   test_record = []
-  for (test_sequence, test_cluster_id) in zip(test_sequences, test_cluster_ids):
-    predicted_cluster_id = model.predict(test_sequence, inference_args)
-    predicted_cluster_ids.append(predicted_cluster_id)
+  # predict sequences in parallel
+  model.rnn_model.share_memory()
+  pool = mp.Pool(NUM_WORKERS, maxtasksperchild=None)
+  pred_gen = pool.imap(
+      func=partial(model.predict, args=inference_args),
+      iterable=test_sequences)
+  # collect and score predicitons
+  for idx, predicted_cluster_id in enumerate(pred_gen):
     accuracy = uisrnn.compute_sequence_match_accuracy(
-        test_cluster_id, predicted_cluster_id)
-    test_record.append((accuracy, len(test_cluster_id)))
+        test_cluster_ids[idx], predicted_cluster_id)
+    predicted_cluster_ids.append(predicted_cluster_id)
+    test_record.append((accuracy, len(test_cluster_ids[idx])))
     print('Ground truth labels:')
-    print(test_cluster_id)
+    print(test_cluster_ids[idx])
     print('Predicted labels:')
     print(predicted_cluster_id)
     print('-' * 80)
 
+  # close multiprocessing pool
+  pool.close()
   # close tensorboard writer
   writer.close()
 
