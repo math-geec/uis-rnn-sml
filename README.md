@@ -1,7 +1,5 @@
 # Better, Faster, Stronger UIS-RNN
 
-## Overview
-
 This repository implements some useful features on top of the original [UIS-RNN repository](https://github.com/google/uis-rnn). Some of them are described in the following paper: [Supervised Online Diarization with Sample Mean Loss for Multi-Domain Data](https://arxiv.org/). 
 Here is a list:
 * **Sample Mean Loss (SML)**, a loss function that improves performance and training efficiency. To learn more about it you can read our paper. 
@@ -9,9 +7,17 @@ Here is a list:
 * **Parallel prediction** using `torch.multiprocessing`, that mitigates the issue with slow decoding and enables higher GPU usage.
 * **Tensorboard** logging, for visualizing training.
 
+Here is a diagram of the Sample Mean Loss:
+
+<p align="center">
+  <img src="./resources/SML_diag.png" width="450">
+</p>
+
 The UIS-RNN was originally proposed in [Fully Supervised Speaker Diarization](https://arxiv.org/abs/1810.04719).
 
-![gif](https://raw.githubusercontent.com/google/uis-rnn/master/resources/uisrnn.gif)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/google/uis-rnn/master/resources/uisrnn.gif" width="500">
+</p>
 
 ## Run the demo
 
