@@ -218,8 +218,8 @@ def resize_sequence(sequence, cluster_id, num_permutations=None):
   return sub_sequences, seq_lengths
 
 
-def pack_sequence(
-    sub_sequences, seq_lengths, batch_size, observation_dim, device):
+def pack_sequence(sub_sequences, seq_lengths, batch_size, observation_dim,
+    device, loss_samples):
   """Pack sequences for training.
 
   Args:
@@ -246,10 +246,10 @@ def pack_sequence(
     for i in range(num_clusters):
       rnn_input[1:sorted_seq_lengths[i], i,
                 :] = sub_sequences[permute_index[i]]
-    rnn_input = autograd.Variable(
+    rnn_input_tensor = autograd.Variable(
         torch.from_numpy(rnn_input).float()).to(device)
     packed_rnn_input = torch.nn.utils.rnn.pack_padded_sequence(
-        rnn_input, sorted_seq_lengths, batch_first=False)
+        rnn_input_tensor, sorted_seq_lengths, batch_first=False)
   else:
     mini_batch = np.sort(np.random.choice(num_clusters, batch_size))
     rnn_input = np.zeros((sorted_seq_lengths[mini_batch[0]],
@@ -258,12 +258,23 @@ def pack_sequence(
     for i in range(batch_size):
       rnn_input[1:sorted_seq_lengths[mini_batch[i]],
                 i, :] = sub_sequences[permute_index[mini_batch[i]]]
-    rnn_input = autograd.Variable(
+    rnn_input_tensor = autograd.Variable(
         torch.from_numpy(rnn_input).float()).to(device)
     packed_rnn_input = torch.nn.utils.rnn.pack_padded_sequence(
-        rnn_input, sorted_seq_lengths[mini_batch], batch_first=False)
-  # ground truth is the shifted input
-  rnn_truth = rnn_input[1:, :, :]
+        rnn_input_tensor, sorted_seq_lengths[mini_batch], batch_first=False)
+  # build ground truth
+  if loss_samples > 0: #
+    rnn_truth = np.zeros_like(rnn_input[1:,:,:])
+    for i in range(batch_size):
+      for j in range(sorted_seq_lengths[mini_batch[i]] - 1):
+        samples_idx =  np.random.randint(
+            low=j + 1,
+            high=sorted_seq_lengths[mini_batch[i]],
+            size=min(loss_samples, sorted_seq_lengths[mini_batch[i]]-j-1))
+        rnn_truth[j] = np.mean(rnn_input[samples_idx, i, :], axis=0)
+  else:
+    rnn_truth = rnn_input[1:, :, :]
+  rnn_truth = torch.from_numpy(rnn_truth).float().to(device)
   return packed_rnn_input, rnn_truth
 
 

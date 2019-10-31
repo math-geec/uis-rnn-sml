@@ -257,7 +257,8 @@ class UISRNN:
           seq_lengths,
           args.batch_size,
           self.observation_dim,
-          self.device)
+          self.device,
+          args.loss_samples)
     train_loss = []
     for _ in range(args.train_iteration):
       self.current_iter += 1
@@ -269,7 +270,8 @@ class UISRNN:
             seq_lengths,
             args.batch_size,
             self.observation_dim,
-            self.device)
+            self.device,
+            args.loss_samples)
       hidden = self.rnn_init_hidden.repeat(1, args.batch_size, 1)
       mean, _ = self.rnn_model(packed_train_sequence, hidden)
       # use mean to predict

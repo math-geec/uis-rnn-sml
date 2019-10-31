@@ -183,6 +183,13 @@ def parse_arguments():
            'is a list of sequences. In general, assume the cluster IDs for two '
            'sequences are [a, b] and [a, c]. If the `a` from the two sequences '
            'are not the same label, then this arg should be True.')
+  training_parser.add_argument(
+      '--loss_samples',
+      default=-1,
+      type=int,
+      help='if loss_samples > 0 then it represents the number of embeddings '
+           'to be sampled in the Sample Mean Loss otherwise it will be ignored '
+           'and the loss will be computed as per the original UIS-RNN')
 
   # inference configurations
   inference_parser = argparse.ArgumentParser(
