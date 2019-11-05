@@ -50,5 +50,12 @@ All the other arguments are the same as per the [original repository](https://gi
 Our paper is cited as:
 
 ```
-coming soon
+@misc{fini2019supervised,
+    title={Supervised online diarization with sample mean loss for multi-domain data},
+    author={Enrico Fini and Alessio Brutti},
+    year={2019},
+    eprint={1911.01266},
+    archivePrefix={arXiv},
+    primaryClass={eess.AS}
+}
 ```
