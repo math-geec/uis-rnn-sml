@@ -41,6 +41,7 @@ testing data.
 * `--loss_samples` the number of samples for the Sample Mean Loss. If `loss_samples <= 0` it will be ignored and the loss will be computed as per the original UIS-RNN
 * `--fc_depth`: the numebr of fully connected layers after the GRU.
 * `--non_lin`: whether to use non linearity (relu) in the fully connected layers.
+* `NUM_WORKERS`: the number of workers (processes) for multiprocessing. The argument can be found in `demo.py`.
 
 All the other arguments are the same as per the [original repository](https://github.com/google/uis-rnn)
 
