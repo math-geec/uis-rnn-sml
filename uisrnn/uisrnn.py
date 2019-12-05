@@ -100,7 +100,7 @@ class UISRNN:
     # booleans indicating which variables are trainable
     self.estimate_sigma2 = (args.sigma2 is None)
     self.estimate_transition_bias = (args.transition_bias is None)
-    self.estimate_crp_alpha = (args.transition_bias is None)
+    self.estimate_crp_alpha = (args.crp_alpha is None)
     # initial values of variables
     sigma2 = _INITIAL_SIGMA2_VALUE if self.estimate_sigma2 else args.sigma2
     self.sigma2 = nn.Parameter(
@@ -108,6 +108,7 @@ class UISRNN:
     self.transition_bias = args.transition_bias
     self.transition_bias_denominator = 0.0
     self.crp_alpha = args.crp_alpha
+    self.crp_alpha_denominator = 0.0
     self.logger = utils.Logger(args.verbosity)
     self.current_iter = 0
 
