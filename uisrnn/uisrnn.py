@@ -242,10 +242,11 @@ class UISRNN:
       raise ValueError('train_sequence length is not equal to '
                        'train_cluster_id length.')
 
-    self.rnn_model.train()
+    self.rnn_model.train()    # pytorch set model to training mode
     optimizer = self._get_optimizer(optimizer=args.optimizer,
                                     learning_rate=args.learning_rate)
 
+    # why resize?
     sub_sequences, seq_lengths = utils.resize_sequence(
         sequence=train_sequence,
         cluster_id=train_cluster_id,
@@ -263,7 +264,7 @@ class UISRNN:
     train_loss = []
     for _ in range(args.train_iteration):
       self.current_iter += 1
-      optimizer.zero_grad()
+      optimizer.zero_grad()    # clear the gradients of all classes
       # For online learning, pack a subset in each iteration.
       if args.batch_size is not None:
         packed_train_sequence, rnn_truth = utils.pack_sequence(
@@ -285,7 +286,7 @@ class UISRNN:
       mean = mean.view(mean_size)
 
       # Likelihood part.
-      loss1 = loss_func.weighted_mse_loss(
+      loss1 = loss_func.weighted_mse_loss(    # first part of Eq.7 in sml paper
           input_tensor=(rnn_truth != 0).float() * mean[:-1, :, :],
           target_tensor=rnn_truth,
           weight=1 / (2 * self.sigma2))
@@ -294,14 +295,14 @@ class UISRNN:
       weight = (((rnn_truth != 0).float() * mean[:-1, :, :] - rnn_truth)
                 ** 2).view(-1, observation_dim)
       num_non_zero = torch.sum((weight != 0).float(), dim=0).squeeze()
-      loss2 = loss_func.sigma2_prior_loss(
+      loss2 = loss_func.sigma2_prior_loss(    # second part of Eq.7 in sml paper
           num_non_zero, args.sigma_alpha, args.sigma_beta, self.sigma2)
 
       # Regularization part.
       loss3 = loss_func.regularization_loss(
           self.rnn_model.parameters(), args.regularization_weight)
 
-      loss = loss1 + loss2 + loss3
+      loss = loss1 + loss2 + loss3    # sml loss Eq.(7)
       loss.backward()
       nn.utils.clip_grad_norm_(self.rnn_model.parameters(), args.grad_max_norm)
       optimizer.step()
@@ -357,7 +358,7 @@ class UISRNN:
     Raises:
       TypeError: If train_sequences or train_cluster_ids is of wrong type.
     """
-    if isinstance(train_sequences, np.ndarray):
+    if isinstance(train_sequences, np.ndarray):    # train_sequences is np.ndarray
       # train_sequences is already the concatenated sequence
       if self.estimate_transition_bias:
         # see issue #55: https://github.com/google/uis-rnn/issues/55
@@ -368,7 +369,7 @@ class UISRNN:
             'single sequence. This can lead to inaccurate estimation of '
             'transition_bias. Please, consider estimating transition_bias '
             'before concatenating the sequences and passing it as argument.')
-      train_sequences = [train_sequences]
+      train_sequences = [train_sequences]    # convert train_sequences to list
       train_cluster_ids = [train_cluster_ids]
     elif isinstance(train_sequences, list):
       # train_sequences is a list of un-concatenated sequences

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="yidi@121.37.203.85:22">
+    <serverData>
+      <paths name="yidi@121.37.203.85:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_472" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

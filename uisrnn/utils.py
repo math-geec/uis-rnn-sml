@@ -337,7 +337,7 @@ def estimate_transition_bias(cluster_ids, smooth=1):
     for entry in range(len(cluster_id_seq) - 1):
       transit_num += (cluster_id_seq[entry] != cluster_id_seq[entry + 1])
       bias_denominator += 1
-  bias = transit_num / bias_denominator
+  bias = transit_num / bias_denominator    # speaker change Eq.(4) in Google paper
   return bias, bias_denominator
 
 
@@ -365,4 +365,4 @@ def estimate_crp_alpha(cluster_ids, smooth=1):
   for cluster_id_seq in cluster_ids:
     for entry in range(len(cluster_id_seq) - 1):
       speaker_changes += (cluster_id_seq[entry] != cluster_id_seq[entry + 1])
-  return speaker_joins / speaker_changes, speaker_changes
+  return speaker_joins / speaker_changes, speaker_changes     # first return is crp_alpha as Eq.(10) in sml paper
