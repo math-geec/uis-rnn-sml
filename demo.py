@@ -17,12 +17,14 @@ import numpy as np
 from functools import partial
 from torch.utils.tensorboard import SummaryWriter
 import torch.multiprocessing as mp
+from sklearn.model_selection import train_test_split
 
 mp = mp.get_context('forkserver')
 
 import uisrnn
 
-SAVED_MODEL_NAME = 'saved_model.uisrnn'
+SAVED_MODEL_NAME = 'gpu_test.uisrnn'
+# SAVED_MODEL_NAME = 'demo_bro015.uisrnn'
 NUM_WORKERS = 2
 
 
@@ -37,12 +39,34 @@ def diarization_experiment(model_args, training_args, inference_args):
     inference_args: inference configurations
   """
     # data loading
-    train_data = np.load('./data/toy_training_data.npz', allow_pickle=True)
-    test_data = np.load('./data/toy_testing_data.npz', allow_pickle=True)
-    train_sequence = train_data['train_sequence']
-    train_cluster_id = train_data['train_cluster_id']
-    test_sequences = test_data['test_sequences'].tolist()
-    test_cluster_ids = test_data['test_cluster_ids'].tolist()
+    # train_data = np.load('./data/toy_training_data.npz', allow_pickle=True)
+    # test_data = np.load('./data/toy_testing_data.npz', allow_pickle=True)
+    # train_sequence = train_data['train_sequence']
+    # train_cluster_id = train_data['train_cluster_id']
+    # test_sequences = test_data['test_sequences'].tolist()
+    # test_cluster_ids = test_data['test_cluster_ids'].tolist()
+    # train_sequence =np.load('/home/yidi/sre_sdi_uclproject/embedding/Bro015.embedding.npy')
+    # train_cluster_id=np.load('/home/yidi/sre_sdi_uclproject/label/Bro015.label.npy')
+    # test_sequences = np.load('/home/yidi/sre_sdi_uclproject/embedding/Bro015.embedding.npy').tolist()
+    # test_cluster_ids = np.load('/home/yidi/sre_sdi_uclproject/label/Bro015.label.npy').tolist()
+    embedding = np.load('/home/yidi/sre_sdi_uclproject/embedding/Bro015.embedding.npy')
+    label = np.load('/home/yidi/sre_sdi_uclproject/label/Bro015.label.npy')
+    train_sequence, test_emb = train_test_split(embedding, test_size=0.2)
+    train_cluster_id, test_label = train_test_split(label, test_size=0.2)
+
+    # build test data
+    window = 30
+    test_sequences = []
+    test_cluster_ids = []
+    for i in range(0, test_emb.shape[0], window):
+        if i + window <= test_emb.shape[0]:
+            sub_emb = test_emb[i:i + window, :]
+            sub_list = test_label[i:i + window].tolist()
+        else:
+            sub_emb = test_emb[i:, :]
+            sub_list = test_label[i:].tolist()
+        test_sequences.append(sub_emb)
+        test_cluster_ids.append(sub_list)
 
     # model init
     model = uisrnn.UISRNN(model_args)

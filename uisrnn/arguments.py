@@ -15,7 +15,8 @@
 
 import argparse
 
-_DEFAULT_OBSERVATION_DIM = 256
+# _DEFAULT_OBSERVATION_DIM = 256
+_DEFAULT_OBSERVATION_DIM = 64
 
 
 def str2bool(value):
@@ -130,13 +131,15 @@ def parse_arguments():
   training_parser.add_argument(
       '--train_iteration',
       '-t',
-      default=20000,
+      # default=20000,
+      default=10000,
       type=int,
       help='The total number of training iterations.')
   training_parser.add_argument(
       '--epochs',
       '-e',
-      default=10,
+      # default=10,
+      default=1,
       type=int,
       help='The total number of training epochs.')
   training_parser.add_argument(
